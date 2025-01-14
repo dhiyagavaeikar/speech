@@ -3,9 +3,6 @@ import speech_recognition as sr
 from gtts import gTTS
 import google.generativeai as genai
 import re
-import logging
-import os
-# logging.basicConfig(level=logging.DEBUG)
 
 # Initialize the Google GenAI API with your key
 genai.configure(api_key="AIzaSyDFJ_Cz2xvOwz9TaAn62rDn1LkzbARWvYU")
@@ -41,12 +38,10 @@ def recognize_speech(audio_data):
     except sr.RequestError:
         return "Sorry, the speech recognition service is unavailable."
 
-# Function to play text-to-speech using gTTS
-def speak_text(text):
-    tts = gTTS(text=text, lang='en')
-    tts.save("response.mp3")
-    os.system("mpg321 response.mp3")  # Use mpg321 to play the audio
-    os.remove("response.mp3")  # Remove the temporary audio file
+# Function to convert text to speech using gTTS
+def text_to_speech(text):
+    tts = gTTS(text)
+    return tts  # Returning the gTTS object directly, without converting to byte stream
 
 # Streamlit Interface
 def chatbot_conversation():
@@ -77,14 +72,16 @@ def chatbot_conversation():
     
     # AI speaks greeting
     greeting_text = "Hi! How can I help you today?"
-    speak_text(greeting_text)
+    tts = text_to_speech(greeting_text)
+    tts.save("greeting.mp3")  # Saving the greeting as an audio file
+    st.audio("greeting.mp3", format="audio/mp3")
     
     # Display AI greeting text on the UI
     st.markdown(f'<div class="chat-box ai-message">{greeting_text}</div>', unsafe_allow_html=True)
     
-    # Start listening for user input immediately
-    while True:
-        st.write("Listening... Please speak into the microphone.")
+    # Add a button for the user to speak
+    if st.button("Click to Speak"):
+        st.write("Please speak into the microphone...")
         
         # Record user audio input
         audio_data = record_audio()
@@ -93,13 +90,6 @@ def chatbot_conversation():
         user_input = recognize_speech(audio_data)
         st.markdown(f'<div class="chat-box user-message">You said: {user_input}</div>', unsafe_allow_html=True)
 
-        # Exit if user says "exit"
-        if re.search(r'\b(exit|quit|bye)\b', user_input, re.IGNORECASE):
-            goodbye_text = "Goodbye! It was nice talking to you."
-            st.markdown(f'<div class="chat-box ai-message">{goodbye_text}</div>', unsafe_allow_html=True)
-            speak_text(goodbye_text)
-            break
-
         # Prepare prompt for AI
         prompt = f"You are an expert AI Assistant. Respond to the following: {user_input}"
 
@@ -107,8 +97,18 @@ def chatbot_conversation():
         response = model.generate_content(prompt).text
         st.markdown(f'<div class="chat-box ai-message">AI: {response}</div>', unsafe_allow_html=True)
 
-        # Optionally, use gTTS for speaking to the user directly
-        speak_text(response)
+        # Convert AI's response to speech and play it
+        tts = text_to_speech(response)
+        tts.save("response.mp3")  # Saving the response message
+        st.audio("response.mp3", format="audio/mp3")
+
+    # Exit if user says "exit" through the button
+    if st.button("Click to Exit"):
+        goodbye_text = "Goodbye! It was nice talking to you."
+        st.markdown(f'<div class="chat-box ai-message">{goodbye_text}</div>', unsafe_allow_html=True)
+        tts = text_to_speech(goodbye_text)
+        tts.save("goodbye.mp3")  # Saving the goodbye message
+        st.audio("goodbye.mp3", format="audio/mp3")
 
 # Run Streamlit chatbot
 if __name__ == '__main__':
