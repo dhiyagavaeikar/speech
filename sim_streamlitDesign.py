@@ -108,7 +108,13 @@ def sim_support_chatbot():
         prompt += "\nSIM Support Bot:"
 
         # Generate the bot's response
-        response = model.generate_content(prompt).text.strip()
+        # response = model.generate_content(prompt).text.strip()
+
+        try:
+            response = model.generate_content(prompt).text.strip()
+        except ValueError as e:
+            # Handle the error, e.g., by retrying, providing a fallback response, or logging
+            response = "I'm sorry, I encountered an issue generating a response. Let me try again."
 
         # Post-process response to avoid repetition
         if response in asked_questions:
