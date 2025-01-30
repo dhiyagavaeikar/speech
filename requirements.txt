@@ -5,4 +5,6 @@ google-generativeai==0.8.3
 SpeechRecognition==3.13.0
 streamlit==1.41.1
 sounddevice==0.5.1
+# pip install mysql-connector-python
+
 # ./path/to/PyAudio-0.2.14-cp312-cp312-linux_x86_64.whl
